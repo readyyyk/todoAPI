@@ -1,0 +1,66 @@
+[
+  {
+    "GroupData": {
+      "created": "2023-03-16T09:14:50.676Z",
+      "id": "6412de0ade9d0225a63fb102",
+      "owners": [
+        "6412de0ade9d0225a63fb0f4",
+        "6412de0ade9d0225a63fb0f9",
+        "6412de0ade9d0225a63fb0fc"
+      ],
+      "title": "SDa2vyDfNK70Dm5X2Pgk9QsiOGTW8Nba"
+    },
+    "TodosData": [
+      {
+        "deadline": "2023-03-26T17:14:50.676Z",
+        "group": "6412de0ade9d0225a63fb102",
+        "oid": "6412de0ade9d0225a63fb112",
+        "startDate": "2023-03-16T09:14:50.676Z",
+        "state": "passive",
+        "text": "Ez_HFOzJW4DfmsTTLvWbl56FhXDRohjNF0H75WZOUuuviLEcXEc0.g15BcxHE9oelyVu2oY0_F4NHAtygT6Vkjsuwe984TJTiCV.SPj1diV3ZfZXipoDAxuO",
+        "title": "ZzP2zg5drZTb8NGXWvqW6"
+      },
+      {
+        "deadline": "2023-03-24T00:14:50.676Z",
+        "group": "6412de0ade9d0225a63fb102",
+        "oid": "6412de0ade9d0225a63fb115",
+        "startDate": "2023-03-16T09:14:50.676Z",
+        "state": "passive",
+        "text": "kAclZ79RFyVZd_51oGzZGWyHhoelR1c9kvBx.v4gzo8NxxMPcLmfnSIyRKWpYWBKsQ3c2GzhQb7NSAE233ydEshcoOOmtrNUvg07GsEQ0aiJMQG8x6_mkK94",
+        "title": "ZEOermm3glq4z8gHN6dHB"
+      },
+      {
+        "deadline": "2023-03-19T22:14:50.676Z",
+        "group": "6412de0ade9d0225a63fb102",
+        "oid": "6412de0ade9d0225a63fb116",
+        "startDate": "2023-03-16T09:14:50.676Z",
+        "state": "passive",
+        "text": "0xJZj9FfBh7zp6CRK_H4Tq_3XaMVA_VhJ8NLPgtzonDNXEgmhB_ss3tLegx_OGXc8VlQCj8rSEKwYNkZ6D_qmzEWw8aCeZz7uMpWtFPMnAZgCwWdH7y6ezoC",
+        "title": "xwCU3FS0b311ZVbywZQx3"
+      }
+    ]
+  },
+  {
+    "GroupData": {
+      "created": "2023-03-16T09:14:50.676Z",
+      "id": "6412de0ade9d0225a63fb107",
+      "owners": [
+        "6412de0ade9d0225a63fb0f4",
+        "6412de0ade9d0225a63fb0f5",
+        "6412de0ade9d0225a63fb0fc"
+      ],
+      "title": "UCjift3tMTuNHA9XUfJ9FsYbCnNYE0ch"
+    },
+    "TodosData": [
+      {
+        "deadline": "2023-03-17T15:14:50.676Z",
+        "group": "6412de0ade9d0225a63fb107",
+        "oid": "6412de0ade9d0225a63fb11a",
+        "startDate": "2023-03-16T09:14:50.676Z",
+        "state": "passive",
+        "text": "6J7O0oi70salRugBOLkuXgTAzzg2pOa7yXwOy87gvlztOngYtLubSa7x5Fhmzyar..Gc_ob.mhXFYRTtchZeG.2n9D8gtI7frz5Q6g7dkKsBHIIMhmd5SMAh",
+        "title": "S9Ya2oNiiYB9StNBhqMxl"
+      }
+    ]
+  }
+]
