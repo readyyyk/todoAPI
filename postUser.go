@@ -16,6 +16,11 @@ import (
 	"time"
 )
 
+type errorDescriptionT struct {
+	Code        int    `json:"code"`
+	Description string `json:"description"`
+}
+
 func postUser(c *gin.Context) {
 	jsonData, err := io.ReadAll(c.Request.Body)
 	logs.LogError(err)
@@ -28,18 +33,20 @@ func postUser(c *gin.Context) {
 
 	if validator.New().Struct(newUser) != nil || err != nil {
 		logs.LogError(err)
-		c.JSON(http.StatusBadRequest, map[string]string{"code": "0", "error": "Invalid data"})
+		c.JSON(http.StatusBadRequest, errorDescriptionT{Code: 0, Description: "Invalid data"})
 		logs.LogError(errors.New(validator.New().Struct(newUser).Error()))
 		return
 	}
 
 	if client.Database("todos").Collection("users").FindOne(context.TODO(), bson.D{{"email", newUser.Email}}).Err() != mongo.ErrNoDocuments {
-		c.JSON(http.StatusBadRequest, map[string]string{"code": "1", "error": "User with this email already exists"})
+		c.JSON(http.StatusBadRequest, errorDescriptionT{Code: 1, Description: "User with this email already exists"})
 		return
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 	res, err := client.Database("todos").Collection("users").InsertOne(
-		context.TODO(),
+		ctx,
 		newUser,
 	)
 	logs.LogError(err)

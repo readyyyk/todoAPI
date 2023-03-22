@@ -7,11 +7,11 @@ import (
 	"github.com/readyyyk/terminal-todos-go/pkg/logs"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"io"
 	"math/rand"
 	"net/http"
 	"os"
+	"reflect"
 	"strconv"
 	"testing"
 	"time"
@@ -39,12 +39,12 @@ func TestGetUserList(t *testing.T) {
 		body, err := io.ReadAll(res.Body)
 		logs.LogError(err)
 		if len(body) != 0 {
-			logFilePath := "logs/test-log-getUsersLIST-" + strconv.Itoa(0) + ".json"
+			logFilePath := "logs/test-log-getUsersLIST--" + strconv.Itoa(0) + ".json"
 			saveLogFile(logFilePath, body)
 		}
 
 		if res.StatusCode != http.StatusForbidden {
-			t.Error("code should be 403, but [" + strconv.Itoa(res.StatusCode) + "] got")
+			t.Error("Code should be 403, but [" + strconv.Itoa(res.StatusCode) + "] got")
 		}
 	})
 	t.Run("user list 200", func(t *testing.T) {
@@ -58,12 +58,12 @@ func TestGetUserList(t *testing.T) {
 		logs.LogError(err)
 
 		if len(body) != 0 {
-			logFilePath := "logs/test-log-getUsersLIST-" + strconv.Itoa(1) + ".json"
+			logFilePath := "logs/test-log-getUsersLIST--" + strconv.Itoa(1) + ".json"
 			saveLogFile(logFilePath, body)
 		}
 
 		if res.StatusCode != http.StatusOK {
-			t.Error("code should be 200, but [" + strconv.Itoa(res.StatusCode) + "] got")
+			t.Error("Code should be 200, but [" + strconv.Itoa(res.StatusCode) + "] got")
 		}
 	})
 	// 403
@@ -78,81 +78,198 @@ func TestUserData(t *testing.T) {
 			res, err := http.Get("http://localhost:8080/users/" + id)
 			logs.LogError(err)
 			if res.StatusCode != 200 {
-				t.Error("code is not 200, it is --- [" + strconv.Itoa(res.StatusCode) + "]")
+				t.Error("Code is not 200, it is --- [" + strconv.Itoa(res.StatusCode) + "]")
 			}
 			body, err := io.ReadAll(res.Body)
 			logs.LogError(err)
 
-			logFilePath := "logs/test-log-getUserData-" + strconv.Itoa(i) + ".json"
+			logFilePath := "logs/test-log-getUserData--" + strconv.Itoa(i) + ".json"
 			saveLogFile(logFilePath, body)
 		})
 	}
 }
 
-type postUserS struct {
+type testDataT struct {
+	data        []testUserPostDataT
+	resp        []testDataRespWaitedT
+	description string
+}
+type testUserPostDataT struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
+type testDataRespWaitedT struct {
+	statusCode int
+	err        errorDescriptionT
+}
 
-// TODO: replace InsertOne to InsertMany for postUser/2
-// TODO: add description of the test to testData structure
+//	type errorDescriptionT struct {
+//		Code        int    `json:"code"`
+//		Description string `json:"description"`
+//	}
 func TestPostUser(t *testing.T) {
 
-	testData := map[postUserS]int{
-		postUserS{ // wrong data
-			Name:     "",
-			Email:    "",
-			Password: "",
-		}: 400,
-		{ // wrong data
-			Name:     "123",
-			Email:    "123",
-			Password: "123",
-		}: 400,
-		{ // user Exists
-			Name:     "123",
-			Email:    "123@gmail.com",
-			Password: "123",
-		}: 400,
-	}
+	/*
+		{
+			data 					testUserPostData
+			resp {
+				statusCode 			int
+				error
+					Code			int
+		 			Description 	string
+			}
+		}
+	*/
 	rand.Seed(time.Now().UnixNano())
 	successTestName := RandString(10, 3)
-	testData[postUserS{ // Success
-		Name:     successTestName,
-		Email:    successTestName + "@gmail.com",
-		Password: successTestName,
-	}] = 200
 
-	cnt := 0
-	for test, waited := range testData {
-		t.Run(strconv.Itoa(cnt), func(t *testing.T) {
-			testJSON, err := json.Marshal(test)
-			logs.LogError(err)
+	testData := []testDataT{
+		// wrong data
+		{
+			data: []testUserPostDataT{
+				{
+					Name:     "",
+					Email:    "",
+					Password: "",
+				},
+			},
+			resp: []testDataRespWaitedT{
+				{
+					statusCode: 400,
+					err: errorDescriptionT{
+						Code:        0,
+						Description: "Invalid data",
+					},
+				},
+			},
+			description: "wrong data",
+		},
+		{
+			data: []testUserPostDataT{
+				{
+					Name:     "123",
+					Email:    "123",
+					Password: "123",
+				},
+			},
+			resp: []testDataRespWaitedT{
+				{
+					statusCode: 400,
+					err: errorDescriptionT{
+						Code:        0,
+						Description: "Invalid data",
+					},
+				},
+			},
+			description: "wrong data",
+		},
 
-			res, err := http.Post("http://localhost:8080/users", "application/json", bytes.NewReader(testJSON))
-			logs.LogError(err)
-			if res.StatusCode != waited {
-				t.Error("code is not " + strconv.Itoa(waited) + ", it is --- [" + strconv.Itoa(res.StatusCode) + "]")
-			}
+		// user Exists
+		{
+			data: []testUserPostDataT{
+				{
+					Name:     successTestName,
+					Email:    successTestName + "@gmail.com",
+					Password: successTestName,
+				},
+				{
+					Name:     successTestName,
+					Email:    successTestName + "@gmail.com",
+					Password: successTestName,
+				},
+			},
+			resp: []testDataRespWaitedT{
+				{
+					statusCode: 200,
+					err: errorDescriptionT{
+						Code:        -1,
+						Description: "",
+					},
+				},
+				{
+					statusCode: 400,
+					err: errorDescriptionT{
+						Code:        1,
+						Description: "User with this email already exists",
+					},
+				},
+			},
+			description: "existing user",
+		},
 
-			body, err := io.ReadAll(res.Body)
-			logs.LogError(err)
+		// success
+		{
+			data: []testUserPostDataT{
+				{
+					Name:     successTestName,
+					Email:    successTestName + "@gmail.com",
+					Password: successTestName,
+				},
+			},
+			resp: []testDataRespWaitedT{
+				{
+					statusCode: 200,
+					err: errorDescriptionT{
+						Code:        -1,
+						Description: "",
+					},
+				},
+			},
+			description: "success",
+		},
+	}
 
-			if len(body) != 0 {
-				logFilePath := "logs/test-log-postUser-" + strconv.Itoa(cnt) + ".json"
-				saveLogFile(logFilePath, body)
-			}
+	for testNumber, test := range testData {
+		t.Run(test.description, func(t *testing.T) {
 
-			if waited == http.StatusOK {
-				var inserted mongo.InsertOneResult
-				logs.LogError(json.Unmarshal(body, &inserted))
-				oid, err := primitive.ObjectIDFromHex(inserted.InsertedID.(string))
+			var toDeleteIds []primitive.ObjectID
+
+			for i, currentTest := range test.data {
+				waited := test.resp[i]
+
+				currentTestJSON, err := json.Marshal(currentTest)
 				logs.LogError(err)
-				_, err = client.Database("todos").Collection("users").DeleteOne(context.TODO(), bson.D{{"_id", oid}})
+
+				res, err := http.Post("http://localhost:8080/users", "application/json", bytes.NewReader(currentTestJSON))
+				logs.LogError(err)
+				if res.StatusCode != waited.statusCode {
+					t.Error("Code is not " + strconv.Itoa(waited.err.Code) + ", it is --- [" + strconv.Itoa(res.StatusCode) + "]")
+				}
+
+				body, err := io.ReadAll(res.Body)
+				logs.LogError(err)
+
+				var responseData any
+				err = json.Unmarshal(body, &responseData)
+				logs.LogError(err)
+				//logs.Deb(reflect.TypeOf(responseData).String())
+
+				if responseData.(map[string]interface{})["InsertedID"] != nil {
+					oid, err := primitive.ObjectIDFromHex(responseData.(map[string]interface{})["InsertedID"].(string))
+					logs.LogError(err)
+					toDeleteIds = append(toDeleteIds, oid)
+				} else {
+					//fmt.Println(responseData)
+					var waitedErrMap map[string]interface{}
+					waitedErrMapJSON, _ := json.Marshal(waited.err)
+					_ = json.Unmarshal(waitedErrMapJSON, &waitedErrMap)
+
+					if !reflect.DeepEqual(responseData, waitedErrMap) {
+						t.Error("DeepEqual returned false:\n", responseData)
+					}
+				}
+
+				if len(body) != 0 {
+					logFilePath := "logs/test-postUser--" + strconv.Itoa(testNumber) + "-" + strconv.Itoa(i) + ".json"
+					saveLogFile(logFilePath, body)
+				}
+			}
+
+			for _, oid := range toDeleteIds {
+				_, err := client.Database("todos").Collection("users").DeleteOne(context.TODO(), bson.D{{"_id", oid}})
 				logs.LogError(err)
 			}
 		})
-		cnt++
 	}
 }

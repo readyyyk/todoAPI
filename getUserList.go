@@ -7,6 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
 	"os"
+	"time"
 )
 
 func getUserList(c *gin.Context) {
@@ -21,7 +22,9 @@ func getUserList(c *gin.Context) {
 		Name  string `bson:"name"`
 		Email string `bson:"email"`
 	}
-	logs.LogError(Select(users, context.TODO(), bson.D{}, &res))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	logs.LogError(Select(users, ctx, bson.D{}, &res))
 
 	c.JSON(http.StatusOK, res)
 }
