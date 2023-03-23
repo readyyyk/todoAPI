@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"github.com/readyyyk/terminal-todos-go/pkg/logs"
@@ -27,6 +26,8 @@ func postUser(c *gin.Context) {
 	//logs.AsJSON(jsonData)
 	var newUser User
 	err = json.Unmarshal(jsonData, &newUser)
+	logs.LogError(err)
+
 	newUser.Id = primitive.NewObjectID()
 	newUser.Registered = time.Now()
 	newUser.Password = base64.StdEncoding.EncodeToString([]byte(newUser.Password))
@@ -34,7 +35,7 @@ func postUser(c *gin.Context) {
 	if validator.New().Struct(newUser) != nil || err != nil {
 		logs.LogError(err)
 		c.JSON(http.StatusBadRequest, errorDescriptionT{Code: 0, Description: "Invalid data"})
-		logs.LogError(errors.New(validator.New().Struct(newUser).Error()))
+		//logs.LogError(errors.New(validator.New().Struct(newUser).Error()))
 		return
 	}
 

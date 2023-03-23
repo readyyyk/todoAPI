@@ -58,11 +58,13 @@ func main() {
 	router := gin.Default()
 
 	router.GET("/users", getUserList)
-	router.GET("/users/:id", getUserData)
+	router.GET("/users/:id/data", getUserData)
+	router.GET("/users/:id/info", getUserInfo)
 
 	router.POST("users", postUser)
-	// 1 user data
 	// user image
+
+	//todos
 
 	logs.LogError(router.Run("localhost:8080"))
 

@@ -39,7 +39,7 @@ func TestGetUserList(t *testing.T) {
 		body, err := io.ReadAll(res.Body)
 		logs.LogError(err)
 		if len(body) != 0 {
-			logFilePath := "logs/test-log-getUsersLIST--" + strconv.Itoa(0) + ".json"
+			logFilePath := "logs/test-getUsersLIST--" + strconv.Itoa(0) + ".json"
 			saveLogFile(logFilePath, body)
 		}
 
@@ -58,7 +58,7 @@ func TestGetUserList(t *testing.T) {
 		logs.LogError(err)
 
 		if len(body) != 0 {
-			logFilePath := "logs/test-log-getUsersLIST--" + strconv.Itoa(1) + ".json"
+			logFilePath := "logs/test-getUsersLIST--" + strconv.Itoa(1) + ".json"
 			saveLogFile(logFilePath, body)
 		}
 
@@ -75,7 +75,7 @@ func TestUserData(t *testing.T) {
 
 	for i, id := range ids {
 		t.Run(id, func(t *testing.T) {
-			res, err := http.Get("http://localhost:8080/users/" + id)
+			res, err := http.Get("http://localhost:8080/users/" + id + "/data")
 			logs.LogError(err)
 			if res.StatusCode != 200 {
 				t.Error("Code is not 200, it is --- [" + strconv.Itoa(res.StatusCode) + "]")
@@ -83,33 +83,36 @@ func TestUserData(t *testing.T) {
 			body, err := io.ReadAll(res.Body)
 			logs.LogError(err)
 
-			logFilePath := "logs/test-log-getUserData--" + strconv.Itoa(i) + ".json"
-			saveLogFile(logFilePath, body)
+			if len(body) != 0 {
+				logFilePath := "logs/test-getUserData--" + strconv.Itoa(i) + ".json"
+				saveLogFile(logFilePath, body)
+			}
 		})
 	}
 }
 
-type testDataT struct {
-	data        []testUserPostDataT
-	resp        []testDataRespWaitedT
-	description string
-}
-type testUserPostDataT struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
+/*
+	type errorDescriptionT struct {
+		Code        int    `json:"code"`
+		Description string `json:"description"`
+	}
+*/
 type testDataRespWaitedT struct {
 	statusCode int
 	err        errorDescriptionT
 }
 
-//	type errorDescriptionT struct {
-//		Code        int    `json:"code"`
-//		Description string `json:"description"`
-//	}
 func TestPostUser(t *testing.T) {
-
+	type testUserPostDataT struct {
+		Name     string `json:"name"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	type testDataT struct {
+		data        []testUserPostDataT
+		resp        []testDataRespWaitedT
+		description string
+	}
 	/*
 		{
 			data 					testUserPostData
@@ -269,6 +272,82 @@ func TestPostUser(t *testing.T) {
 			for _, oid := range toDeleteIds {
 				_, err := client.Database("todos").Collection("users").DeleteOne(context.TODO(), bson.D{{"_id", oid}})
 				logs.LogError(err)
+			}
+		})
+	}
+}
+
+func TestUserInfo(t *testing.T) {
+	type testDataT struct {
+		id          string
+		resp        testDataRespWaitedT
+		description string
+	}
+	testData := []testDataT{
+		{
+			id: "6412de0ade9d0225a63fb0f",
+			resp: testDataRespWaitedT{
+				statusCode: 400,
+				err: errorDescriptionT{
+					Code:        0,
+					Description: "Invalid data",
+				},
+			},
+			description: "wrong data",
+		},
+		{
+			id: "6412de0ade9d0225a63fb0f0",
+			resp: testDataRespWaitedT{
+				statusCode: 404,
+				err: errorDescriptionT{
+					Code:        2,
+					Description: "user don't exists",
+				},
+			},
+			description: "user don't exists",
+		},
+		{
+			id: "6412de0ade9d0225a63fb0f4",
+			resp: testDataRespWaitedT{
+				statusCode: 200,
+				err: errorDescriptionT{
+					Code:        -1,
+					Description: "",
+				},
+			},
+			description: "success",
+		},
+	}
+	for testNumber, test := range testData {
+		t.Run(test.description, func(t *testing.T) {
+			res, err := http.Get("http://localhost:8080/users/" + test.id + "/info")
+			logs.LogError(err)
+
+			if res.StatusCode != test.resp.statusCode {
+				t.Error("Code is not " + strconv.Itoa(test.resp.statusCode) + ", it is --- [" + strconv.Itoa(res.StatusCode) + "]")
+			}
+
+			body, err := io.ReadAll(res.Body)
+			logs.LogError(err)
+
+			if len(body) != 0 {
+				logFilePath := "logs/test-getUserInfo--" + strconv.Itoa(testNumber) + ".json"
+				saveLogFile(logFilePath, body)
+
+				var resData map[string]interface{}
+				logs.LogError(json.Unmarshal(body, &resData))
+
+				if res.StatusCode != 200 {
+					var waitedErrMap map[string]interface{}
+					waitedErrMapJSON, _ := json.Marshal(test.resp.err)
+					_ = json.Unmarshal(waitedErrMapJSON, &waitedErrMap)
+
+					if !reflect.DeepEqual(waitedErrMap, resData) {
+						if !reflect.DeepEqual(resData, waitedErrMap) {
+							t.Error("DeepEqual returned false:\n", resData)
+						}
+					}
+				}
 			}
 		})
 	}
