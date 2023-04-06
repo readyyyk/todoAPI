@@ -343,9 +343,7 @@ func TestUserInfo(t *testing.T) {
 					_ = json.Unmarshal(waitedErrMapJSON, &waitedErrMap)
 
 					if !reflect.DeepEqual(waitedErrMap, resData) {
-						if !reflect.DeepEqual(resData, waitedErrMap) {
-							t.Error("DeepEqual returned false:\n", resData)
-						}
+						t.Error("DeepEqual returned false:\n", resData)
 					}
 				}
 			}
