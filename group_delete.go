@@ -31,6 +31,11 @@ func deleteGroup(c *gin.Context) {
 	token, err := jwt.ParseWithClaims(authToken, &claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
+	if err == primitive.ErrInvalidHex {
+		c.JSON(401, errorDescriptionT{Code: 4, Description: "JWT token is invalid"})
+		logs.LogError(err)
+		return
+	}
 	if !token.Valid {
 		c.JSON(401, errorDescriptionT{
 			Code:        4,

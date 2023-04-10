@@ -25,21 +25,16 @@ func createTodo(c *gin.Context) {
 	token, err := jwt.ParseWithClaims(authToken, &claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
-	if !token.Valid {
-		c.JSON(401, errorDescriptionT{
-			Code:        4,
-			Description: "JWT token is invalid",
-		})
+	if !token.Valid || err != nil {
+		c.JSON(401, errorDescriptionT{Code: 4, Description: "JWT token is invalid"})
+		logs.LogError(err)
 		return
 	}
 
 	// parse userId from jwt
 	uid, err := primitive.ObjectIDFromHex(claims["id"].(string))
 	if err == primitive.ErrInvalidHex {
-		c.JSON(401, errorDescriptionT{
-			Code:        4,
-			Description: "JWT token is invalid",
-		})
+		c.JSON(401, errorDescriptionT{Code: 4, Description: "JWT token is invalid"})
 		logs.LogError(err)
 		return
 	}
@@ -48,6 +43,11 @@ func createTodo(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	groupId, err := primitive.ObjectIDFromHex(c.Param("group_id"))
+	if err == primitive.ErrInvalidHex {
+		c.JSON(http.StatusBadRequest, errorDescriptionT{Code: 0, Description: "invalid data"})
+		logs.LogError(err)
+		return
+	}
 	groupFindRes := client.Database("todos").Collection("groups").FindOne(
 		ctx,
 		bson.D{{

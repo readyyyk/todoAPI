@@ -9,12 +9,12 @@ import (
 	"net/http"
 )
 
-type fullGroupData struct {
-	GroupData Group
-	TodosData []Todo
-}
-
 func getUserData(c *gin.Context) /*(result []fullGroupData)*/ {
+	type fullGroupData struct {
+		GroupData Group
+		TodosData []Todo
+	}
+
 	var result []fullGroupData
 
 	cid := c.Param("id")

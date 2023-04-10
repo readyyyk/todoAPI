@@ -15,10 +15,7 @@ import (
 func deleteUser(c *gin.Context) {
 	oid, err := primitive.ObjectIDFromHex(c.Param("id"))
 	if err == mongo.ErrInvalidIndexValue {
-		c.JSON(http.StatusBadRequest, errorDescriptionT{
-			Code:        0,
-			Description: "Invalid data",
-		})
+		c.JSON(http.StatusBadRequest, errorDescriptionT{Code: 0, Description: "Invalid data"})
 		return
 	}
 
@@ -45,6 +42,7 @@ func deleteUser(c *gin.Context) {
 	}
 	logs.LogError(Select(client.Database("todos").Collection("groups"), ctx, bson.D{{"owners", bson.A{oid}}}, &groupIds))
 	currentRes, err := client.Database("todos").Collection("groups").DeleteMany(ctx, bson.D{{"owners", bson.A{oid}}})
+	logs.LogError(err)
 	delRes["deletedGroupsCnt"] = currentRes.DeletedCount
 
 	// deleting todos

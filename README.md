@@ -1,5 +1,8 @@
 # todoAPI
 
+[![CodeFactor](https://www.codefactor.io/repository/github/readyyyk/todoapi/badge)](https://www.codefactor.io/repository/github/readyyyk/todoapi)
+[![Go report](https://goreportcard.com/badge/github.com/readyyyk/todoAPI)](https://goreportcard.com/report/github.com/readyyyk/todoAPI)
+
 ### Custom error descriptions
 
 | Code | Meaning                             |

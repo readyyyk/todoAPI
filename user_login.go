@@ -42,7 +42,16 @@ func loginUser(c *gin.Context) {
 
 	var userData userLoginT
 	jsonData, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, errorDescriptionT{Code: 0, Description: "Invalid data"})
+		return
+	}
+
 	err = json.Unmarshal(jsonData, &userData)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, errorDescriptionT{Code: 0, Description: "Invalid data"})
+		return
+	}
 
 	uemail := userData.Email
 	upswd, err := base64.StdEncoding.DecodeString(userData.Pswd)

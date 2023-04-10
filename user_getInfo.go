@@ -15,9 +15,8 @@ func getUserInfo(c *gin.Context) {
 	if err == primitive.ErrInvalidHex {
 		c.Status(http.StatusBadRequest)
 		return
-	} else {
-		logs.LogError(err)
 	}
+	logs.LogError(err)
 
 	var currentUser []User
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
