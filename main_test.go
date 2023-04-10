@@ -264,7 +264,7 @@ func TestPostUser(t *testing.T) {
 				}
 
 				if len(body) != 0 {
-					logFilePath := "logs/test-postUser--" + strconv.Itoa(testNumber) + "-" + strconv.Itoa(i) + ".json"
+					logFilePath := "logs/test-createUser--" + strconv.Itoa(testNumber) + "-" + strconv.Itoa(i) + ".json"
 					saveLogFile(logFilePath, body)
 				}
 			}

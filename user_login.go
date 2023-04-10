@@ -16,10 +16,10 @@ import (
 )
 
 func GenerateJWT(id primitive.ObjectID) string {
-	token := jwt.New(jwt.SigningMethodHS256)
-	claims := token.Claims.(jwt.MapClaims)
-	claims["id"] = id.String()
-	claims["exp"] = time.Now().Add(time.Hour * 24 * 3)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":  id.Hex(),
+		"exp": time.Now().Add(time.Hour * 24 * 3).Unix(),
+	})
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	signedToken, err := token.SignedString([]byte(jwtSecret))

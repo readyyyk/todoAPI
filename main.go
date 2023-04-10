@@ -66,6 +66,9 @@ func Select(from *mongo.Collection, ctx context.Context, filter bson.D, res any)
 
 func init() {
 	logs.LogError(godotenv.Load(".env"))
+
+	AvailableTodoState = []string{"passive", "ongoing", "done", "important", "expired"}
+
 	//DbUser := os.Getenv("DB_USER")
 	//DbPassword := os.Getenv("DB_PASSWORD")
 
@@ -87,32 +90,32 @@ func main() {
 	}()
 
 	logs.LogSuccess(GenerateJWT(primitive.NewObjectID()))
+
 	router := gin.Default()
 
 	// user
 	// TODO user image
-	router.POST(routes.user.c, postUser)         // c
+	router.POST(routes.user.c, createUser)       // c
 	router.GET(routes.user.getList, getUserList) // get list of all users
 	router.GET(routes.user.r, getUserInfo)       // r
 	router.GET(routes.user.getData, getUserData) // get entire data
 	router.PUT(routes.user.u, updateUser)        // u
 	router.DELETE(routes.user.d, deleteUser)     // d
 	router.POST(routes.user.getData, loginUser)  // auth
-	/*
-		// groups	access only for owner
-		//			Logged header required
-		router.POST("/groups", createGroup)
-		router.GET("/groups/:id", getGroup)
-		router.PUT("/groups/:id", updateGroup)
-		router.DELETE("/groups/:id", deleteGroup)
-		// PUT /groups/:id/users/:userId
 
-		// todos
-		router.POST("/groups/:group_id/todos", createTodo)
-		router.GET("/groups/:group_id/todos/:todo_id", getTodo)
-		router.PUT("/groups/:group_id/todos/:todo_id", updateTodo)
-		router.DELETE("/groups/:group_id/todos/:todo_id", deleteTodo)
-	*/
+	// groups	access only for owners
+	//			Auth header required
+	router.POST("/groups", createGroup)
+	router.DELETE("/groups/:group_id", deleteGroup)
+	//router.PUT("/groups/:id", updateGroup)
+	//router.GET("/groups/:id", getGroup)
+	// PUT /groups/:id/users/:userId
+
+	// todos
+	router.POST("/groups/:group_id/todos", createTodo)
+	router.DELETE("/groups/:group_id/todos/:todo_id", deleteTodo)
+	//router.GET("/groups/:group_id/todos/:todo_id", getTodo)
+	//router.PUT("/groups/:group_id/todos/:todo_id", updateTodo)
 
 	//initRandomData(9, 14, 22, true)
 

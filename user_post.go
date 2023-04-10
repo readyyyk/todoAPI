@@ -20,13 +20,11 @@ type errorDescriptionT struct {
 	Description string `json:"description"`
 }
 
-func postUser(c *gin.Context) {
+func createUser(c *gin.Context) {
 	jsonData, err := io.ReadAll(c.Request.Body)
 	logs.LogError(err)
-	//logs.AsJSON(jsonData)
 	var newUser User
 	err = json.Unmarshal(jsonData, &newUser)
-	logs.LogError(err)
 
 	newUser.Id = primitive.NewObjectID()
 	newUser.Registered = time.Now()
