@@ -41,8 +41,8 @@ var routes = routesT{
 			u: "/users/:id",
 			d: "/users/:id",
 		},
-		getLogin: "/users/:email/:password",
-		getData:  "/users/login",
+		getLogin: "/users/login",
+		getData:  "/users/:id/data",
 		getList:  "/users",
 	},
 }
@@ -101,7 +101,7 @@ func main() {
 	router.GET(routes.user.getData, getUserData) // get entire data
 	router.PUT(routes.user.u, updateUser)        // u
 	router.DELETE(routes.user.d, deleteUser)     // d
-	router.POST(routes.user.getData, loginUser)  // auth
+	router.POST(routes.user.getLogin, loginUser) // auth
 
 	// groups	access only for owners
 	//			Auth header required
@@ -121,5 +121,4 @@ func main() {
 
 	logs.LogWarning("SERVER starting on `" + host + "`...\n")
 	logs.LogError(router.Run(host))
-
 }

@@ -45,11 +45,16 @@ func createGroup(c *gin.Context) {
 	defer cancel()
 
 	jsonData, err := io.ReadAll(c.Request.Body)
-	logs.LogError(err)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, errorDescriptionT{Code: 0, Description: "Invalid data"})
+		logs.LogError(err)
+		return
+	}
 	var newGroup Group
 	err = json.Unmarshal(jsonData, &newGroup)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, errorDescriptionT{Code: 0, Description: "Invalid data"})
+		logs.LogError(err)
 		return
 	}
 
