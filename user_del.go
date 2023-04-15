@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -19,6 +20,20 @@ func deleteUser(c *gin.Context) {
 		return
 	}
 
+	// check if user owns provided group
+	uid, err := parseJWT(c.GetHeader("Auth"))
+	if err != nil {
+		c.JSON(401, errorDescriptionT{Code: 4, Description: "JWT token is invalid"})
+		logs.LogError(err)
+		return
+	}
+
+	if uid != oid && c.GetHeader("X-admin-access") != os.Getenv("ADMIN_ACCESS") {
+		c.JSON(http.StatusForbidden, errorDescriptionT{Code: 6, Description: "User doesn't own this group"})
+		return
+	}
+
+	// method logic
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 

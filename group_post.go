@@ -4,43 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
 	"github.com/readyyyk/terminal-todos-go/pkg/logs"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"io"
 	"net/http"
-	"os"
 	"time"
 )
 
 func createGroup(c *gin.Context) {
-	authToken := c.GetHeader("Auth")
 
-	// parse and validate jwt auth token
-	var claims jwt.MapClaims
-	token, err := jwt.ParseWithClaims(authToken, &claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("JWT_SECRET")), nil
-	})
-	if err == primitive.ErrInvalidHex {
+	// parse user id
+	uid, err := parseJWT(c.GetHeader("Auth"))
+	if err != nil {
 		c.JSON(401, errorDescriptionT{Code: 4, Description: "JWT token is invalid"})
-		logs.LogError(err)
-		return
-	}
-	if !token.Valid {
-		c.JSON(401, errorDescriptionT{
-			Code:        4,
-			Description: "JWT token is invalid",
-		})
-		return
-	}
-
-	// parse userId from jwt
-	uid, err := primitive.ObjectIDFromHex(claims["id"].(string))
-	if err == primitive.ErrInvalidHex {
-		c.JSON(401, errorDescriptionT{
-			Code:        4,
-			Description: "JWT token is invalid",
-		})
 		logs.LogError(err)
 		return
 	}

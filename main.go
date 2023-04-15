@@ -11,6 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"net/http"
+	"os"
 	"reflect"
 )
 
@@ -33,17 +35,33 @@ type routesT struct {
 	todos  routesCRUD
 }
 
+// <host>/api/...
 var routes = routesT{
+	// <host>/api/users/...
 	user: userRoutesT{
 		routesCRUD: routesCRUD{
-			c: "/users",
-			r: "/users/:id",
-			u: "/users/:id",
-			d: "/users/:id",
+			c: "",
+			r: "/:id",
+			u: "/:id",
+			d: "/:id",
 		},
-		getLogin: "/users/login",
-		getData:  "/users/:id/data",
-		getList:  "/users",
+		getLogin: "/login",
+		getData:  "/:id/data",
+		getList:  "",
+	},
+
+	// Todo: groups - Add ["add user", "rec deletion", "update"], unit tests
+	// <host>/api/groups/...
+	groups: routesCRUD{
+		c: "",
+		d: "/:group_id",
+	},
+
+	// Todo: groups - Add ["update"], unit tests
+	// <host>/api/groups/:group_id/todos/...
+	todos: routesCRUD{
+		c: "",
+		d: "/:todo_id",
 	},
 }
 
@@ -69,11 +87,7 @@ func init() {
 
 	AvailableTodoState = []string{"passive", "ongoing", "done", "important", "expired"}
 
-	//DbUser := os.Getenv("DB_USER")
-	//DbPassword := os.Getenv("DB_PASSWORD")
-
-	//url := "mongodb+srv://" + DbUser + ":" + DbPassword + "@test.acviawj.mongodb.net/?retryWrites=true&w=majority"
-	url := "mongodb://127.0.0.1:27017"
+	url := fmt.Sprintf(os.Getenv("DB_URL")) //, os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"))
 
 	err := errors.New("")
 	client, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(url))
@@ -85,40 +99,56 @@ func init() {
 func main() {
 	defer func() {
 		logs.LogError(client.Disconnect(context.TODO()))
-		fmt.Println()
-		logs.LogSuccess("Connection closed\n")
+		logs.LogSuccess("\nConnection closed\n")
 	}()
 
 	logs.LogSuccess(GenerateJWT(primitive.NewObjectID()))
 
+	// Defining routes
 	router := gin.Default()
 
-	// user
-	// TODO user image
-	router.POST(routes.user.c, createUser)       // c
-	router.GET(routes.user.getList, getUserList) // get list of all users
-	router.GET(routes.user.r, getUserInfo)       // r
-	router.GET(routes.user.getData, getUserData) // get entire data
-	router.PUT(routes.user.u, updateUser)        // u
-	router.DELETE(routes.user.d, deleteUser)     // d
-	router.POST(routes.user.getLogin, loginUser) // auth
+	// ! API routes
+	apiRoutes := router.Group("/api")
+	{
+		apiRoutes.GET("/", func(c *gin.Context) {
+			c.JSON(http.StatusOK, "github.com/readyyyk/todoAPI")
+		})
 
-	// groups	access only for owners
-	//			Auth header required
-	router.POST("/groups", createGroup)
-	router.DELETE("/groups/:group_id", deleteGroup)
-	//router.PUT("/groups/:id", updateGroup)
-	//router.GET("/groups/:id", getGroup)
-	// PUT /groups/:id/users/:userId
+		// TODO: user image
+		// ! USERS
+		usersRoutes := apiRoutes.Group("/users")
+		{
+			usersRoutes.POST(routes.user.c, createUser)       // c
+			usersRoutes.GET(routes.user.getList, getUserList) // get list of all users
+			usersRoutes.GET(routes.user.r, getUserInfo)       // r
+			usersRoutes.GET(routes.user.getData, getUserData) // get entire data
+			usersRoutes.PUT(routes.user.u, updateUser)        // u
+			usersRoutes.DELETE(routes.user.d, deleteUser)     // d
+			usersRoutes.POST(routes.user.getLogin, loginUser) // auth
+		}
 
-	// todos
-	router.POST("/groups/:group_id/todos", createTodo)
-	router.DELETE("/groups/:group_id/todos/:todo_id", deleteTodo)
-	//router.GET("/groups/:group_id/todos/:todo_id", getTodo)
-	//router.PUT("/groups/:group_id/todos/:todo_id", updateTodo)
+		// ! GROUPS	access only for owners
+		//			"Auth" header required
+		groupRoutes := apiRoutes.Group("/groups")
+		{
+			groupRoutes.POST("/", createGroup)
+			groupRoutes.DELETE("/:group_id", deleteGroup)
+			// router.PUT("/:id", updateGroup)
+			// router.GET("/:id", getGroup)
+
+			// ! TODOS
+			todoRoutes := groupRoutes.Group("/:group_id/todos")
+			{
+				todoRoutes.POST("/", createTodo)
+				todoRoutes.DELETE("/:todo_id", deleteTodo)
+				//todoRoutes.GET("/:group_id/todos/:todo_id", getTodo)
+				//todoRoutes.PUT("/:group_id/todos/:todo_id", updateTodo)
+			}
+		}
+	}
 
 	//initRandomData(9, 14, 22, true)
-
-	logs.LogWarning("SERVER starting on `" + host + "`...\n")
+	logs.LogSuccess("Connected database url: " + os.Getenv("DB_URL") + "\n")
+	logs.LogSuccess("SERVER starting on `" + host + "`...\n")
 	logs.LogError(router.Run(host))
 }

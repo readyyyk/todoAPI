@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"io"
 	"net/http"
+	"os"
 	"reflect"
 )
 
@@ -28,6 +29,20 @@ func updateUser(c *gin.Context) {
 		logs.LogError(err)
 	}
 
+	// check if user tries to update itself or not
+	uid, err := parseJWT(c.GetHeader("Auth"))
+	if err != nil {
+		c.JSON(401, errorDescriptionT{Code: 4, Description: "JWT token is invalid"})
+		logs.LogError(err)
+		return
+	}
+
+	if uid != oid && c.GetHeader("X-admin-access") != os.Getenv("ADMIN_ACCESS") {
+		c.JSON(http.StatusForbidden, errorDescriptionT{Code: 6, Description: "User doesn't own this group"})
+		return
+	}
+
+	// method logic
 	reqBodyJSON, err := io.ReadAll(c.Request.Body)
 	if len(reqBodyJSON) == 0 {
 		c.Status(200)
