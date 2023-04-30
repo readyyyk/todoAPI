@@ -1,9 +1,11 @@
-package main
+package m_user
 
 import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/readyyyk/terminal-todos-go/pkg/logs"
+	apiErrors "github.com/readyyyk/todoAPI/pkg/errors"
+	"github.com/readyyyk/todoAPI/pkg/proceeding"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -12,24 +14,23 @@ import (
 	"time"
 )
 
-// not completely tested
-func deleteUser(c *gin.Context) {
+func Delete(c *gin.Context) {
 	oid, err := primitive.ObjectIDFromHex(c.Param("id"))
 	if err == mongo.ErrInvalidIndexValue {
-		c.JSON(http.StatusBadRequest, errorDescriptionT{Code: 0, Description: "Invalid data"})
+		c.JSON(http.StatusBadRequest, apiErrors.Errors[0])
 		return
 	}
 
-	// check if user owns provided group
-	uid, err := parseJWT(c.GetHeader("Auth"))
+	// check if user owns provided m_group
+	uid, err := proceeding.ParseJWT(c.GetHeader("Auth"))
 	if err != nil {
-		c.JSON(401, errorDescriptionT{Code: 4, Description: "JWT token is invalid"})
+		c.JSON(401, apiErrors.Errors[4])
 		logs.LogError(err)
 		return
 	}
 
 	if uid != oid && c.GetHeader("X-admin-access") != os.Getenv("ADMIN_ACCESS") {
-		c.JSON(http.StatusForbidden, errorDescriptionT{Code: 6, Description: "User doesn't own this group"})
+		c.JSON(http.StatusForbidden, apiErrors.Errors[6])
 		return
 	}
 
@@ -38,12 +39,10 @@ func deleteUser(c *gin.Context) {
 	defer cancel()
 
 	// deleting user
+	client := proceeding.NewDbClient()
 	_, err = client.Database("todos").Collection("users").DeleteOne(ctx, bson.D{{"_id", oid}})
 	if err == mongo.ErrNoDocuments {
-		c.JSON(http.StatusNotFound, errorDescriptionT{
-			Code:        2,
-			Description: "user dont exists",
-		})
+		c.JSON(http.StatusNotFound, apiErrors.Errors[2])
 		return
 	}
 	logs.LogError(err)
@@ -55,14 +54,14 @@ func deleteUser(c *gin.Context) {
 	var groupIds []struct {
 		Id primitive.ObjectID `bson:"_id" json:"id"`
 	}
-	logs.LogError(Select(client.Database("todos").Collection("groups"), ctx, bson.D{{"owners", bson.A{oid}}}, &groupIds))
+	logs.LogError(proceeding.Select(client.Database("todos").Collection("groups"), ctx, bson.D{{"owners", bson.A{oid}}}, &groupIds))
 	currentRes, err := client.Database("todos").Collection("groups").DeleteMany(ctx, bson.D{{"owners", bson.A{oid}}})
 	logs.LogError(err)
 	delRes["deletedGroupsCnt"] = currentRes.DeletedCount
 
 	// deleting todos
 	for _, groupId := range groupIds {
-		currentRes, err := client.Database("todos").Collection("groups").DeleteMany(ctx, bson.D{{"group", groupId}})
+		currentRes, err := client.Database("todos").Collection("groups").DeleteMany(ctx, bson.D{{"m_group", groupId}})
 		logs.LogError(err)
 		delRes["deletedTodosCnt"] += currentRes.DeletedCount
 	}

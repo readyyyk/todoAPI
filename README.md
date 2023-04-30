@@ -7,9 +7,9 @@
 
 | Code | Meaning                             |
 |------|-------------------------------------|
-| 0    | invalid data                        |
+| 0    | Invalid data                        |
 | 1    | User with this email already exists |
-| 2    | user don't exists                   |
+| 2    | User don't exists                   |
 | 3    | Wrong password                      |
 | 4    | JWT token is invalid                |
 | 5    | Group don't exist                   |

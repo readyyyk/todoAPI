@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/readyyyk/terminal-todos-go/pkg/logs"
+	"github.com/readyyyk/todoAPI/pkg/proceeding"
+	"github.com/readyyyk/todoAPI/pkg/types"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"math/rand"
 	"sort"
@@ -23,6 +25,7 @@ func RandString(n int, min int) string {
 
 func initRandomData(usersCnt int, groupsCnt int, todosCnt int, logRes bool) {
 	rand.Seed(time.Now().UnixNano())
+	client := proceeding.NewDbClient()
 
 	users := client.Database("todos").Collection("users")
 	groups := client.Database("todos").Collection("groups")
@@ -38,12 +41,12 @@ func initRandomData(usersCnt int, groupsCnt int, todosCnt int, logRes bool) {
 
 		pswd := base64.StdEncoding.EncodeToString([]byte(RandString(12, 8)))
 
-		newUser := User{
-			nID,
-			RandString(rand.Intn(20), 2) + "@gmail.com",
-			pswd,
-			time.Now(),
-			RandString(10, 1),
+		newUser := types.User{
+			Id:         nID,
+			Email:      RandString(rand.Intn(20), 2) + "@gmail.com",
+			Password:   pswd,
+			Registered: time.Now(),
+			Name:       RandString(10, 1),
 		}
 		userDataSet = append(userDataSet, newUser)
 	}
@@ -68,11 +71,11 @@ func initRandomData(usersCnt int, groupsCnt int, todosCnt int, logRes bool) {
 			return ownersTmp[i].String() < ownersTmp[j].String()
 		})
 
-		newGroup := Group{
-			nID,
-			ownersTmp,
-			RandString(30, 2),
-			time.Now(),
+		newGroup := types.Group{
+			Id:      nID,
+			Owners:  ownersTmp,
+			Title:   RandString(30, 2),
+			Created: time.Now(),
 		}
 		//logs.AsJSON(groupDataSet)
 
@@ -86,20 +89,20 @@ func initRandomData(usersCnt int, groupsCnt int, todosCnt int, logRes bool) {
 			groupIds[i], groupIds[j] = groupIds[j], groupIds[i]
 		})
 
-		newTodo := Todo{
-			primitive.NewObjectID(),
-			groupIds[0],
-			RandString(20, 1),
-			RandString(100, 20),
-			"passive",
-			time.Now(),
-			time.Now().Add(time.Hour * time.Duration(rand.Intn(300)+1)),
+		newTodo := types.Todo{
+			Id:        primitive.NewObjectID(),
+			Group:     groupIds[0],
+			Title:     RandString(20, 1),
+			Text:      RandString(100, 20),
+			State:     "passive",
+			StartDate: time.Now(),
+			Deadline:  time.Now().Add(time.Hour * time.Duration(rand.Intn(300)+1)),
 		}
 		todosDataSet = append(todosDataSet, newTodo)
 	}
 	//logs.AsJSON(todosDataSet)
 
-	//err := client.Database("todos").Drop(context.TODO())
+	//err := Client.Database("todos").Drop(context.TODO())
 	//logs.LogError(err)
 
 	logs.LogError(users.Drop(context.TODO()))

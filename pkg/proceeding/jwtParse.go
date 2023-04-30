@@ -1,4 +1,4 @@
-package main
+package proceeding
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 	"regexp"
 )
 
-func parseJWT(authToken string) (primitive.ObjectID, error) {
+func ParseJWT(authToken string) (primitive.ObjectID, error) {
 	// parse and validate jwt auth token
 	if m, err := regexp.MatchString(`.+[.].+[.].+`, authToken); !m || err != nil {
 		logs.LogError(err)

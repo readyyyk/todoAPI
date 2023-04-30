@@ -1,4 +1,4 @@
-package main
+package m_user
 
 import (
 	"context"
@@ -7,6 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"github.com/readyyyk/terminal-todos-go/pkg/logs"
+	apiErrors "github.com/readyyyk/todoAPI/pkg/errors"
+	"github.com/readyyyk/todoAPI/pkg/proceeding"
+	"github.com/readyyyk/todoAPI/pkg/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -15,15 +18,10 @@ import (
 	"time"
 )
 
-type errorDescriptionT struct {
-	Code        int    `json:"code"`
-	Description string `json:"description"`
-}
-
-func createUser(c *gin.Context) {
+func Create(c *gin.Context) {
 	jsonData, err := io.ReadAll(c.Request.Body)
 	logs.LogError(err)
-	var newUser User
+	var newUser types.User
 	err = json.Unmarshal(jsonData, &newUser)
 
 	newUser.Id = primitive.NewObjectID()
@@ -32,13 +30,14 @@ func createUser(c *gin.Context) {
 
 	if validator.New().Struct(newUser) != nil || err != nil {
 		logs.LogError(err)
-		c.JSON(http.StatusBadRequest, errorDescriptionT{Code: 0, Description: "Invalid data"})
+		c.JSON(http.StatusBadRequest, apiErrors.Errors[0])
 		//logs.LogError(errors.New(validator.New().Struct(newUser).Error()))
 		return
 	}
 
+	client := proceeding.NewDbClient()
 	if client.Database("todos").Collection("users").FindOne(context.TODO(), bson.D{{"email", newUser.Email}}).Err() != mongo.ErrNoDocuments {
-		c.JSON(http.StatusBadRequest, errorDescriptionT{Code: 1, Description: "User with this email already exists"})
+		c.JSON(http.StatusBadRequest, apiErrors.Errors[1])
 		return
 	}
 

@@ -270,7 +270,7 @@ func TestPostUser(t *testing.T) {
 			}
 
 			for _, oid := range toDeleteIds {
-				_, err := client.Database("todos").Collection("users").DeleteOne(context.TODO(), bson.D{{"_id", oid}})
+				_, err := Client.Database("todos").Collection("users").DeleteOne(context.TODO(), bson.D{{"_id", oid}})
 				logs.LogError(err)
 			}
 		})

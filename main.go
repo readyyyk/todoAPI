@@ -1,22 +1,18 @@
 package main
 
 import (
-	"context"
-	"errors"
-	"fmt"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/readyyyk/terminal-todos-go/pkg/logs"
-	"go.mongodb.org/mongo-driver/bson"
+	"github.com/readyyyk/todoAPI/m_group"
+	"github.com/readyyyk/todoAPI/m_todo"
+	"github.com/readyyyk/todoAPI/m_user"
+	"github.com/readyyyk/todoAPI/pkg/proceeding"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
 	"os"
-	"reflect"
 )
-
-var client *mongo.Client
 
 const host = "localhost:8080"
 
@@ -65,82 +61,49 @@ var routes = routesT{
 	},
 }
 
-func Select(from *mongo.Collection, ctx context.Context, filter bson.D, res any) error {
-	if reflect.TypeOf(res).Kind() != reflect.Ptr {
-		fmt.Println(reflect.ValueOf(res).Kind())
-		return errors.New("`res` must be pointer")
-	}
-	data, err := from.Find(ctx, filter)
-	if err == mongo.ErrNoDocuments {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-
-	err = data.All(context.TODO(), res)
-	return err
-}
-
 func init() {
 	logs.LogError(godotenv.Load(".env"))
-
-	AvailableTodoState = []string{"passive", "ongoing", "done", "important", "expired"}
-
-	url := fmt.Sprintf(os.Getenv("DB_URL")) //, os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"))
-
-	err := errors.New("")
-	client, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(url))
-	logs.LogError(err)
-	logs.LogError(client.Ping(context.TODO(), nil))
-	logs.LogSuccess("Connected to database\n")
 }
 
 func main() {
-	defer func() {
-		logs.LogError(client.Disconnect(context.TODO()))
-		logs.LogSuccess("\nConnection closed\n")
-	}()
-
-	logs.LogSuccess(GenerateJWT(primitive.NewObjectID()))
+	logs.LogSuccess(proceeding.GenerateJWT(primitive.NewObjectID()) + "\n")
 
 	// Defining routes
 	router := gin.Default()
+	router.Use(cors.Default())
 
 	// ! API routes
 	apiRoutes := router.Group("/api")
 	{
-		apiRoutes.GET("/", func(c *gin.Context) {
-			c.JSON(http.StatusOK, "github.com/readyyyk/todoAPI")
-		})
+		apiRoutes.GET("/", func(c *gin.Context) { c.JSON(http.StatusOK, "github.com/readyyyk/todoAPI") })
 
 		// TODO: user image
 		// ! USERS
 		usersRoutes := apiRoutes.Group("/users")
 		{
-			usersRoutes.POST(routes.user.c, createUser)       // c
-			usersRoutes.GET(routes.user.getList, getUserList) // get list of all users
-			usersRoutes.GET(routes.user.r, getUserInfo)       // r
-			usersRoutes.GET(routes.user.getData, getUserData) // get entire data
-			usersRoutes.PUT(routes.user.u, updateUser)        // u
-			usersRoutes.DELETE(routes.user.d, deleteUser)     // d
-			usersRoutes.POST(routes.user.getLogin, loginUser) // auth
+			usersRoutes.POST(routes.user.c, m_user.Create)       // c
+			usersRoutes.GET(routes.user.getList, m_user.GetList) // get list of all users
+			usersRoutes.GET(routes.user.r, m_user.GetInfo)       // r
+			usersRoutes.GET(routes.user.getData, m_user.GetData) // get entire data
+			usersRoutes.PUT(routes.user.u, m_user.Update)        // u
+			usersRoutes.DELETE(routes.user.d, m_user.Delete)     // d
+			usersRoutes.POST(routes.user.getLogin, m_user.Login) // auth
 		}
 
 		// ! GROUPS	access only for owners
 		//			"Auth" header required
 		groupRoutes := apiRoutes.Group("/groups")
 		{
-			groupRoutes.POST("/", createGroup)
-			groupRoutes.DELETE("/:group_id", deleteGroup)
+			groupRoutes.POST(routes.groups.c, m_group.Create)
+			groupRoutes.DELETE(routes.groups.d, m_group.Delete)
 			// router.PUT("/:id", updateGroup)
 			// router.GET("/:id", getGroup)
 
 			// ! TODOS
 			todoRoutes := groupRoutes.Group("/:group_id/todos")
 			{
-				todoRoutes.POST("/", createTodo)
-				todoRoutes.DELETE("/:todo_id", deleteTodo)
+				todoRoutes.POST(routes.todos.c, m_todo.Create)
+				todoRoutes.DELETE(routes.todos.d, m_todo.Delete)
 				//todoRoutes.GET("/:group_id/todos/:todo_id", getTodo)
 				//todoRoutes.PUT("/:group_id/todos/:todo_id", updateTodo)
 			}
@@ -148,7 +111,7 @@ func main() {
 	}
 
 	//initRandomData(9, 14, 22, true)
-	logs.LogSuccess("Connected database url: " + os.Getenv("DB_URL") + "\n")
+	logs.LogSuccess("Database url: " + os.Getenv("DB_URL") + "\n")
 	logs.LogSuccess("SERVER starting on `" + host + "`...\n")
 	logs.LogError(router.Run(host))
 }
