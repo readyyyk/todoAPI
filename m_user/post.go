@@ -8,7 +8,6 @@ import (
 	"github.com/go-playground/validator"
 	"github.com/readyyyk/terminal-todos-go/pkg/logs"
 	apiErrors "github.com/readyyyk/todoAPI/pkg/errors"
-	"github.com/readyyyk/todoAPI/pkg/proceeding"
 	"github.com/readyyyk/todoAPI/pkg/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -18,7 +17,7 @@ import (
 	"time"
 )
 
-func Create(c *gin.Context) {
+func Create(c *gin.Context, client *mongo.Client) {
 	jsonData, err := io.ReadAll(c.Request.Body)
 	logs.LogError(err)
 	var newUser types.User
@@ -35,7 +34,6 @@ func Create(c *gin.Context) {
 		return
 	}
 
-	client := proceeding.NewDbClient()
 	if client.Database("todos").Collection("users").FindOne(context.TODO(), bson.D{{"email", newUser.Email}}).Err() != mongo.ErrNoDocuments {
 		c.JSON(http.StatusBadRequest, apiErrors.Errors[1])
 		return

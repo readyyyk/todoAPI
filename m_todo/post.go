@@ -29,7 +29,7 @@ func contains[T comparable](s []T, str T) bool {
 }
 */
 
-func Create(c *gin.Context) {
+func Create(c *gin.Context, client *mongo.Client) {
 	// parse user id
 	uid, err := proceeding.ParseJWT(c.GetHeader("Auth"))
 	if err != nil {
@@ -47,7 +47,6 @@ func Create(c *gin.Context) {
 		return
 	}
 	logs.LogError(err)
-	client := proceeding.NewDbClient()
 	groupFindRes := client.Database("todos").Collection("groups").FindOne(
 		ctx,
 		/*bson.D{{

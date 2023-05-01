@@ -14,16 +14,7 @@ import (
 	"time"
 )
 
-func contains[T comparable](s []T, str T) bool {
-	for _, v := range s {
-		if v == str {
-			return true
-		}
-	}
-	return false
-}
-
-func Delete(c *gin.Context) {
+func Delete(c *gin.Context, client *mongo.Client) {
 	// parse user id
 	uid, err := proceeding.ParseJWT(c.GetHeader("Auth"))
 	if err != nil {
@@ -41,7 +32,6 @@ func Delete(c *gin.Context) {
 		return
 	}
 	logs.LogError(err)
-	client := proceeding.NewDbClient()
 	groupFindRes := client.Database("todos").Collection("groups").FindOne(
 		ctx,
 		bson.D{{"_id", groupId}},
@@ -52,7 +42,7 @@ func Delete(c *gin.Context) {
 	}
 	var groupFound types.Group
 	logs.LogError(groupFindRes.Decode(&groupFound))
-	if !contains(groupFound.Owners, uid) {
+	if !proceeding.Contains(groupFound.Owners, uid) {
 		c.JSON(http.StatusForbidden, apiErrors.Errors[6])
 		return
 	}

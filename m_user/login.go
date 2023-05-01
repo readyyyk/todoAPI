@@ -10,12 +10,13 @@ import (
 	"github.com/readyyyk/todoAPI/pkg/proceeding"
 	"github.com/readyyyk/todoAPI/pkg/types"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"io"
 	"net/http"
 	"time"
 )
 
-func Login(c *gin.Context) {
+func Login(c *gin.Context, client *mongo.Client) {
 	type loginRespT struct {
 		Logged bool                        `json:"logged"`
 		Err    apiErrors.ErrorDescriptionT `json:"err"`
@@ -62,7 +63,6 @@ func Login(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 	var userSelectRes []types.User
-	client := proceeding.NewDbClient()
 	logs.LogError(proceeding.Select(
 		client.Database("todos").Collection("users"),
 		ctx,

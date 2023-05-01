@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func Delete(c *gin.Context) {
+func Delete(c *gin.Context, client *mongo.Client) {
 	oid, err := primitive.ObjectIDFromHex(c.Param("id"))
 	if err == mongo.ErrInvalidIndexValue {
 		c.JSON(http.StatusBadRequest, apiErrors.Errors[0])
@@ -39,7 +39,6 @@ func Delete(c *gin.Context) {
 	defer cancel()
 
 	// deleting user
-	client := proceeding.NewDbClient()
 	_, err = client.Database("todos").Collection("users").DeleteOne(ctx, bson.D{{"_id", oid}})
 	if err == mongo.ErrNoDocuments {
 		c.JSON(http.StatusNotFound, apiErrors.Errors[2])

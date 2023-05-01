@@ -9,11 +9,12 @@ import (
 	"github.com/readyyyk/todoAPI/pkg/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 	"os"
 )
 
-func GetData(c *gin.Context) /*(result []fullGroupData)*/ {
+func GetData(c *gin.Context, client *mongo.Client) /*(result []fullGroupData)*/ {
 	type fullGroupData struct {
 		GroupData types.Group
 		TodosData []types.Todo
@@ -43,7 +44,6 @@ func GetData(c *gin.Context) /*(result []fullGroupData)*/ {
 	}
 
 	// method logic
-	client := proceeding.NewDbClient()
 	groups := client.Database("todos").Collection("groups")
 	todos := client.Database("todos").Collection("todos")
 

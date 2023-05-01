@@ -9,12 +9,13 @@ import (
 	"github.com/readyyyk/todoAPI/pkg/proceeding"
 	"github.com/readyyyk/todoAPI/pkg/types"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"io"
 	"net/http"
 	"time"
 )
 
-func Create(c *gin.Context) {
+func Create(c *gin.Context, client *mongo.Client) {
 	// parse user id
 	uid, err := proceeding.ParseJWT(c.GetHeader("Auth"))
 	if err != nil {
@@ -46,7 +47,6 @@ func Create(c *gin.Context) {
 	newGroup.Created = time.Now()
 
 	// insert new m_group to database
-	client := proceeding.NewDbClient()
 	res, err := client.Database("todos").Collection("groups").InsertOne(ctx, newGroup)
 	logs.LogError(err)
 	c.JSON(http.StatusOK, res)

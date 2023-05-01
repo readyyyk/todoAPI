@@ -9,11 +9,12 @@ import (
 	"github.com/readyyyk/todoAPI/pkg/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 	"time"
 )
 
-func GetInfo(c *gin.Context) {
+func GetInfo(c *gin.Context, client *mongo.Client) {
 	userId, err := primitive.ObjectIDFromHex(c.Param("id"))
 	if err == primitive.ErrInvalidHex {
 		c.Status(http.StatusBadRequest)
@@ -24,7 +25,6 @@ func GetInfo(c *gin.Context) {
 	var currentUser []types.User
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	client := proceeding.NewDbClient()
 	logs.LogError(proceeding.Select(
 		client.Database("todos").Collection("users"),
 		ctx,

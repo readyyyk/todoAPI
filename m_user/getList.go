@@ -6,18 +6,18 @@ import (
 	"github.com/readyyyk/terminal-todos-go/pkg/logs"
 	"github.com/readyyyk/todoAPI/pkg/proceeding"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 	"os"
 	"time"
 )
 
-func GetList(c *gin.Context) {
+func GetList(c *gin.Context, client *mongo.Client) {
 	if c.GetHeader("X-admin-access") != os.Getenv("ADMIN_ACCESS") {
 		c.Status(http.StatusForbidden)
 		return
 	}
 
-	client := proceeding.NewDbClient()
 	users := client.Database("todos").Collection("users")
 	var res []struct {
 		Id    string `bson:"_id"`

@@ -17,7 +17,7 @@ import (
 	"reflect"
 )
 
-func Update(c *gin.Context) {
+func Update(c *gin.Context, client *mongo.Client) {
 	oid, err := primitive.ObjectIDFromHex(c.Param("id"))
 	if err == mongo.ErrInvalidIndexValue {
 		c.JSON(http.StatusBadRequest, apiErrors.Errors[0])
@@ -53,9 +53,8 @@ func Update(c *gin.Context) {
 	}{}
 	logs.LogError(json.Unmarshal(reqBodyJSON, &reqBody))
 
-	client := proceeding.NewDbClient()
 	usersColl := client.Database("todos").Collection("users")
-	
+
 	var currentUser types.User
 	var selectRes []types.User
 	logs.LogError(proceeding.Select(usersColl, context.Background(), bson.D{{"_id", oid}}, &selectRes))
